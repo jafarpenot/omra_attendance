@@ -160,7 +160,7 @@ function HomeView({
         <SectionCard title="💰 Budget estimé">
           <div className="text-center mb-6">
             <span className="text-3xl md:text-4xl font-bold" style={{ color: '#c49e44' }}>
-              ~1 000 – 1 100 €
+              ~1 000 – 1 200 €
             </span>
             <span className="ml-2 text-lg" style={{ color: '#f0e8d5', opacity: 0.8 }}>
               / personne
