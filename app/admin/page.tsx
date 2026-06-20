@@ -9,7 +9,10 @@ interface Registration {
   adults: number
   children: number
   departureCity: string
-  flightPreference: string
+  flightPreference?: string // legacy field — no longer collected
+  flightNumber?: string // legacy single-flight field
+  flightNumberOut?: string
+  flightNumberReturn?: string
   proba: string
   comment?: string
   date: string
@@ -133,16 +136,12 @@ function AdminDashboard({ registrations }: { registrations: Registration[] }) {
   }, 0)
 
   const cityCount: Record<string, number> = { Lyon: 0, Paris: 0, Autre: 0 }
-  const flightCount: Record<string, number> = { groupe: 0, individuel: 0 }
   const probaCount: Record<string, { families: number; persons: number }> = {}
 
   registrations.forEach((r) => {
     const city = r.departureCity ?? 'Autre'
     if (city in cityCount) cityCount[city]++
     else cityCount['Autre']++
-
-    const fp = r.flightPreference ?? 'individuel'
-    if (fp in flightCount) flightCount[fp]++
 
     const pk = r.proba ?? 'possible'
     if (!probaCount[pk]) probaCount[pk] = { families: 0, persons: 0 }
@@ -194,35 +193,7 @@ function AdminDashboard({ registrations }: { registrations: Registration[] }) {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Flight pref */}
-            <div
-              className="rounded-xl p-4"
-              style={{ backgroundColor: 'rgba(196,158,68,0.08)', border: '1px solid rgba(196,158,68,0.25)' }}
-            >
-              <div className="text-xs uppercase tracking-wider mb-3" style={{ color: '#c49e44', opacity: 0.8 }}>
-                Préférence vol
-              </div>
-              <div className="space-y-2">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm" style={{ color: '#f0e8d5', opacity: 0.8 }}>
-                    🤝 Groupe
-                  </span>
-                  <span className="font-bold" style={{ color: '#c49e44' }}>
-                    {flightCount.groupe} famille(s)
-                  </span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm" style={{ color: '#f0e8d5', opacity: 0.8 }}>
-                    ✈️ Individuel
-                  </span>
-                  <span className="font-bold" style={{ color: '#c49e44' }}>
-                    {flightCount.individuel} famille(s)
-                  </span>
-                </div>
-              </div>
-            </div>
-
+          <div className="grid grid-cols-1 gap-4">
             {/* Certitude breakdown */}
             <div
               className="rounded-xl p-4"
@@ -294,9 +265,16 @@ function AdminDashboard({ registrations }: { registrations: Registration[] }) {
                     <span style={{ color: '#f0e8d5', opacity: 0.75 }}>
                       📍 {r.departureCity}
                     </span>
-                    <span style={{ color: '#f0e8d5', opacity: 0.75 }}>
-                      {r.flightPreference === 'groupe' ? '🤝 Groupe' : '✈️ Individuel'}
-                    </span>
+                    {(r.flightNumberOut || r.flightNumber) && (
+                      <span style={{ color: '#f0e8d5', opacity: 0.55 }}>
+                        🛫 {r.flightNumberOut || r.flightNumber}
+                      </span>
+                    )}
+                    {r.flightNumberReturn && (
+                      <span style={{ color: '#f0e8d5', opacity: 0.55 }}>
+                        🛬 {r.flightNumberReturn}
+                      </span>
+                    )}
                   </div>
                   {r.comment && (
                     <p className="mt-2 text-sm italic" style={{ color: '#f0e8d5', opacity: 0.6 }}>

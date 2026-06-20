@@ -11,7 +11,10 @@ interface Registration {
   adults: number
   children: number
   departureCity: string
-  flightPreference: string
+  flightPreference?: string // kept for backward compatibility — no longer displayed
+  flightNumber?: string // legacy single-flight field — migrated into flightNumberOut
+  flightNumberOut?: string
+  flightNumberReturn?: string
   proba: string
   comment?: string
   date: string
@@ -132,7 +135,7 @@ function HomeView({
             {[
               { label: 'Dates', value: '~18 – 28 oct. 2026', sub: '(± 1 jour)' },
               { label: 'Villes', value: 'Makkah → Medine', sub: '' },
-              { label: 'Durée', value: '~10 jours', sub: '2-3 j. Makkah + 2-3 j. Medine' },
+              { label: 'Durée', value: '~10 jours', sub: '~3 j. à La Mecque + ~7 j. à Médine' },
               { label: 'Départ', value: 'Lyon & Paris', sub: '' },
             ].map((item) => (
               <div
@@ -156,11 +159,86 @@ function HomeView({
           </div>
         </SectionCard>
 
-        {/* Section 2 — Budget estimé */}
+        {/* Section 2 — Notice importante */}
+        <div
+          className="rounded-2xl border-2 p-6 md:p-8 mb-8"
+          style={{ borderColor: '#dc2626', backgroundColor: 'rgba(220,38,38,0.07)' }}
+        >
+          <h2
+            className="text-xl md:text-2xl font-semibold mb-4"
+            style={{ color: '#fca5a5', fontFamily: 'Georgia, Palatino, serif' }}
+          >
+            ⚠️ Notice importante — À lire attentivement
+          </h2>
+          <div className="space-y-5 text-base leading-relaxed" style={{ color: '#f0e8d5' }}>
+            <div>
+              <h3 className="font-semibold mb-1" style={{ color: '#fca5a5' }}>
+                Sidi et Oumoussama
+              </h3>
+              <p>
+                Sidi et Oumoussama seront peut-être présents lors de ce voyage, mais{' '}
+                <strong style={{ color: '#fca5a5' }}>sans aucune garantie</strong>. Vous pourrez
+                insha&apos;Allah les croiser, mais ne comptez pas sur leur présence permanente.
+                L&apos;Omra ne sera pas effectuée avec eux — chacun effectuera son Omra avec son
+                groupe, selon son rythme.
+              </p>
+            </div>
+            <div>
+              <h3 className="font-semibold mb-1" style={{ color: '#fca5a5' }}>
+                Responsabilité familiale
+              </h3>
+              <p>
+                Cette Omra est organisée pour l&apos;ensemble du groupe, mais chaque participant est
+                entièrement responsable de sa propre famille : ses enfants, ses personnes âgées et
+                toute personne à sa charge. Les organisateurs ne peuvent pas assurer la prise en
+                charge individuelle des membres de chaque famille.
+              </p>
+            </div>
+            <div>
+              <h3 className="font-semibold mb-1" style={{ color: '#fca5a5' }}>
+                Organisation bénévole — aucune réclamation
+              </h3>
+              <p>
+                Ce voyage est organisé bénévolement, dans le seul but de faciliter l&apos;accès à
+                l&apos;Omra de manière simple et abordable. En conséquence, aucune réclamation ou
+                plainte ne pourra être acceptée. Si un aspect de l&apos;organisation ne convient pas
+                à un participant (transport, hébergement, programme...), il est libre d&apos;organiser
+                cela par ses propres moyens — à condition d&apos;en informer les organisateurs à
+                l&apos;avance.
+              </p>
+            </div>
+            <div>
+              <h3 className="font-semibold mb-1" style={{ color: '#fca5a5' }}>
+                Séparation hommes / femmes
+              </h3>
+              <p>
+                Dans un souci d&apos;organisation et d&apos;économie, les chambres seront réparties
+                entre hommes et femmes séparément. Ne comptez pas nécessairement sur être dans la
+                même chambre que votre famille ou votre conjoint(e). Cette organisation nous permet
+                de minimiser les coûts pour tout le monde.
+              </p>
+            </div>
+            <div>
+              <h3 className="font-semibold mb-1" style={{ color: '#fca5a5' }}>
+                Date limite d&apos;inscription — IMPORTANT
+              </h3>
+              <p>
+                Les inscriptions doivent être confirmées{' '}
+                <strong style={{ color: '#fca5a5' }}>avant mi-juillet 2026</strong>, et au plus tard{' '}
+                <strong style={{ color: '#fca5a5' }}>fin juillet 2026</strong>. Passé cette date, les
+                personnes non inscrites ne seront pas comptabilisées et ne pourront plus rejoindre le
+                groupe. Toute personne confirmée fin juillet s&apos;engage à participer et à régler sa
+                part des frais d&apos;hébergement, qui sera réservé sur cette base.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Section 3 — Budget estimé */}
         <SectionCard title="💰 Budget estimé">
           <div className="text-center mb-6">
             <span className="text-3xl md:text-4xl font-bold" style={{ color: '#c49e44' }}>
-              ~1 000 – 1 200 €
+              ~1 100 – 1 200 €
             </span>
             <span className="ml-2 text-lg" style={{ color: '#f0e8d5', opacity: 0.8 }}>
               / personne
@@ -178,7 +256,7 @@ function HomeView({
               <span className="text-xl">🏨</span>
               <span style={{ color: '#f0e8d5' }}>
                 <strong style={{ color: '#c49e44' }}>Hébergement + repas + transport sur place + visites</strong>{' '}
-                (Makkah, Medine, grottes et lieux saints) : ~500 €
+                (Makkah, Medine, grottes et lieux saints) : ~550 €
               </span>
             </li>
           </ul>
@@ -191,81 +269,74 @@ function HomeView({
           </div>
         </SectionCard>
 
-        {/* Section 3 — Notice importante */}
-        <div
-          className="rounded-2xl border-2 p-6 md:p-8 mb-8"
-          style={{ borderColor: '#dc2626', backgroundColor: 'rgba(220,38,38,0.07)' }}
-        >
-          <h2
-            className="text-xl md:text-2xl font-semibold mb-4"
-            style={{ color: '#fca5a5', fontFamily: 'Georgia, Palatino, serif' }}
-          >
-            ⚠️ Notice importante — À lire attentivement
-          </h2>
-          <div className="space-y-4 text-base leading-relaxed" style={{ color: '#f0e8d5' }}>
-            <p>
-              Sidi et Oumoussama seront peut-être présents lors de ce voyage, mais{' '}
-              <strong style={{ color: '#fca5a5' }}>sans aucune garantie</strong>. Vous pourrez
-              insha&apos;Allah les croiser, mais ne comptez pas sur leur présence.
-            </p>
-            <p>
-              L&apos;Omra sera organisée en petits groupes. Ne comptez pas sur Sidi pour vous
-              accompagner ou vous guider personnellement pendant les rituels — chacun effectuera son
-              Omra avec son groupe, selon son rythme.
-            </p>
-          </div>
-        </div>
-
         {/* Section 4 — Vols */}
         <SectionCard title="✈️ Vols">
-          <div className="grid md:grid-cols-2 gap-4 mb-5">
-            <div
-              className="rounded-xl p-4"
-              style={{ backgroundColor: 'rgba(196,158,68,0.1)', border: '1px solid rgba(196,158,68,0.25)' }}
-            >
-              <div className="text-2xl mb-2">🛫</div>
-              <div className="font-semibold mb-1" style={{ color: '#c49e44' }}>
-                Aller
+          <div
+            className="rounded-xl p-4 mb-5 text-sm leading-relaxed"
+            style={{ borderLeft: '3px solid #c49e44', backgroundColor: 'rgba(196,158,68,0.12)', color: '#f0e8d5' }}
+          >
+            <strong style={{ color: '#c49e44' }}>
+              Chaque participant réserve son propre billet d&apos;avion, individuellement.
+            </strong>{' '}
+            Nous vous communiquerons les meilleures options trouvées pour vous aider à choisir.
+          </div>
+          {/* TODO: add flight links when provided */}
+          <div className="grid md:grid-cols-3 gap-4 mb-5">
+            {[
+              {
+                icon: '🛫',
+                route: 'Aller — Rome (FCO) → Jeddah (JED)',
+                airline: 'WizzAir',
+                detail:
+                  "Option low-cost intéressante pour l'aller. Nécessite de se rendre à Rome au préalable (train, covoiturage, vol interne).",
+              },
+              {
+                icon: '🛬',
+                route: 'Retour — Medine (MED) → Paris (ORY)',
+                airline: 'Transavia',
+                detail:
+                  'Option intéressante pour le retour direct depuis Médine vers Paris-Orly.',
+              },
+              {
+                icon: '🛫🛬',
+                route: 'Aller-Retour via Athènes',
+                airline: 'Aegean Airlines (compagnie grecque)',
+                detail:
+                  'Option intéressante en aller-retour via Athènes. Dessert Lyon et Paris. À comparer selon les dates.',
+              },
+            ].map((f) => (
+              <div
+                key={f.route}
+                className="rounded-xl p-4"
+                style={{ backgroundColor: 'rgba(196,158,68,0.1)', border: '1px solid rgba(196,158,68,0.25)' }}
+              >
+                <div className="text-2xl mb-2">{f.icon}</div>
+                <div className="text-sm font-medium mb-1" style={{ color: '#f0e8d5' }}>
+                  {f.route}
+                </div>
+                <div className="text-sm font-semibold mb-2" style={{ color: '#c49e44' }}>
+                  {f.airline}
+                </div>
+                <div className="text-sm" style={{ color: '#f0e8d5', opacity: 0.75 }}>
+                  {f.detail}
+                </div>
               </div>
-              <div className="text-sm font-medium mb-1" style={{ color: '#f0e8d5' }}>
-                Rome (FCO) → Jeddah (JED)
-              </div>
-              <div className="text-sm" style={{ color: '#f0e8d5', opacity: 0.75 }}>
-                Option intéressante avec WizzAir depuis Rome à l&apos;étude.
-              </div>
-            </div>
-            <div
-              className="rounded-xl p-4"
-              style={{ backgroundColor: 'rgba(196,158,68,0.1)', border: '1px solid rgba(196,158,68,0.25)' }}
-            >
-              <div className="text-2xl mb-2">🛬</div>
-              <div className="font-semibold mb-1" style={{ color: '#c49e44' }}>
-                Retour
-              </div>
-              <div className="text-sm font-medium mb-1" style={{ color: '#f0e8d5' }}>
-                Medine (MED) → Paris (ORY)
-              </div>
-              <div className="text-sm" style={{ color: '#f0e8d5', opacity: 0.75 }}>
-                Option intéressante avec Transavia depuis Medine vers Paris à l&apos;étude.
-              </div>
-            </div>
+            ))}
           </div>
           <div
             className="rounded-xl p-4 text-sm leading-relaxed space-y-3"
-            style={{ backgroundColor: 'rgba(13,37,24,0.8)', border: '1px solid rgba(196,158,68,0.2)', color: '#f0e8d5' }}
+            style={{ borderLeft: '3px solid #c49e44', backgroundColor: 'rgba(196,158,68,0.08)', color: '#f0e8d5' }}
           >
+            <div className="font-semibold" style={{ color: '#c49e44' }}>
+              🚌 Transport aéroport → hôtel
+            </div>
             <p style={{ opacity: 0.9 }}>
-              Nous contactons compagnies et agences pour un tarif groupe. Pour l&apos;instant les
-              agences proposent les mêmes prix voire plus cher — les négociations continuent.
+              Nous organiserons 2 à 3 navettes collectives depuis l&apos;aéroport vers l&apos;hôtel
+              pour regrouper les arrivants aux horaires les plus fréquentés.
             </p>
-            <p>
-              <strong style={{ color: '#c49e44' }}>Si un bon tarif groupe est trouvé</strong> → tout
-              le monde voyage ensemble avec accueil coordonné à l&apos;aéroport.
-            </p>
-            <p>
-              <strong style={{ color: '#c49e44' }}>Sinon</strong> → chacun réserve son propre
-              billet. On organisera 1 ou 2 navettes de pickup selon les vols les plus représentés.
-              Les autres rejoindront l&apos;hôtel par leurs propres moyens.
+            <p style={{ opacity: 0.9 }}>
+              Les participants qui ne souhaitent pas attendre peuvent prendre un taxi sur place —
+              les tarifs sont très abordables.
             </p>
           </div>
         </SectionCard>
@@ -320,9 +391,201 @@ function HomeView({
           <p className="text-sm italic" style={{ color: '#f0e8d5', opacity: 0.65 }}>
             D&apos;autres établissements sont également à l&apos;étude selon les disponibilités et les tarifs.
           </p>
+
+          {/* Repas sub-section */}
+          <div
+            className="rounded-xl p-4 mt-6"
+            style={{ backgroundColor: 'rgba(196,158,68,0.1)', border: '1px solid rgba(196,158,68,0.25)' }}
+          >
+            <div className="font-semibold mb-3" style={{ color: '#c49e44' }}>
+              🍽 Repas
+            </div>
+            <p className="text-sm mb-3" style={{ color: '#f0e8d5', opacity: 0.85 }}>
+              Les repas suivants sont inclus dans l&apos;organisation :
+            </p>
+            <ul className="space-y-2 mb-3">
+              <li className="flex items-start gap-2 text-sm" style={{ color: '#f0e8d5', opacity: 0.9 }}>
+                <span style={{ color: '#c49e44' }}>•</span>
+                <span>
+                  <strong style={{ color: '#c49e44' }}>Petit-déjeuner</strong> — fourni chaque matin
+                </span>
+              </li>
+              <li className="flex items-start gap-2 text-sm" style={{ color: '#f0e8d5', opacity: 0.9 }}>
+                <span style={{ color: '#c49e44' }}>•</span>
+                <span>
+                  <strong style={{ color: '#c49e44' }}>Déjeuner</strong> — un repas collectif sera
+                  organisé la plupart des jours, aux alentours de Duhr ou Asr
+                </span>
+              </li>
+            </ul>
+            <p className="text-sm" style={{ color: '#f0e8d5', opacity: 0.85 }}>
+              Les détails (lieu, menu) seront communiqués sur place. Prévoyez de quoi compléter selon
+              vos besoins personnels (enfants, régimes particuliers, etc.).
+            </p>
+          </div>
         </SectionCard>
 
-        {/* Section 6 — CTA Inscription */}
+        {/* Section 6 — Programme & Visites */}
+        <SectionCard title="🕌 Programme & Visites">
+          <p className="text-sm mb-6" style={{ color: '#f0e8d5', opacity: 0.85 }}>
+            Le programme détaillé sera communiqué à l&apos;approche de la date du voyage. Voici les
+            visites prévues :
+          </p>
+          <div className="grid md:grid-cols-2 gap-4 mb-5">
+            {[
+              {
+                city: 'À La Mecque',
+                visits: [
+                  'Jabal Al Nour (Grotte de Hiraa) — lieu de la première révélation',
+                  "Jabal Al Thawr — grotte où le Prophète ﷺ s'est réfugié lors de l'Hégire",
+                  "Deuxième Omra (insha'Allah)",
+                ],
+              },
+              {
+                city: 'À Médine',
+                visits: [
+                  'Champ de bataille de Badr',
+                  'Mont Uhud',
+                  "Masjid Quba — première mosquée de l'Islam",
+                  'Masjid Qiblatayn — mosquée des deux qiblas',
+                  'Puits de Ghars (Bir Ghars) — puits utilisé par le Prophète ﷺ',
+                  'Palmeraie de Médine — plantation de palmiers-dattiers historique',
+                ],
+              },
+            ].map((group) => (
+              <div
+                key={group.city}
+                className="rounded-xl p-4"
+                style={{ backgroundColor: 'rgba(196,158,68,0.1)', border: '1px solid rgba(196,158,68,0.25)' }}
+              >
+                <div className="font-semibold mb-3" style={{ color: '#c49e44' }}>
+                  {group.city}
+                </div>
+                <ul className="space-y-2">
+                  {group.visits.map((v) => (
+                    <li key={v} className="flex items-start gap-2 text-sm" style={{ color: '#f0e8d5', opacity: 0.9 }}>
+                      <span style={{ color: '#c49e44' }}>📍</span>
+                      <span>{v}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+          <p className="text-xs italic" style={{ color: '#f0e8d5', opacity: 0.6 }}>
+            * Les allers-retours quotidiens vers les deux Haramayn — Al-Masjid Al-Haram (La Mecque)
+            et Al-Masjid An-Nabawi (Mosquée du Prophète à Médine) — ne sont pas organisés par nos
+            soins. L&apos;hôtel met à disposition des navettes aux heures de prière, libres à vous de
+            les utiliser. En revanche, les visites listées ci-dessus seront organisées et encadrées
+            par le groupe.
+          </p>
+        </SectionCard>
+
+        {/* Section 7 — À faire maintenant */}
+        <SectionCard title="✅ À faire maintenant">
+          <div className="grid md:grid-cols-2 gap-4">
+            {/* Visa card */}
+            <div
+              className="rounded-xl p-4"
+              style={{ backgroundColor: 'rgba(196,158,68,0.1)', border: '1px solid rgba(196,158,68,0.25)' }}
+            >
+              <div className="text-2xl mb-2">🛂</div>
+              <div className="font-semibold mb-2" style={{ color: '#c49e44' }}>
+                Faire son visa
+              </div>
+              <div className="text-sm space-y-3" style={{ color: '#f0e8d5', opacity: 0.85 }}>
+                <p>
+                  Le visa touristique pour l&apos;Arabie Saoudite est obligatoire et s&apos;obtient
+                  entièrement en ligne.
+                </p>
+                <p>
+                  <strong style={{ color: '#fca5a5' }}>⚠️ Important :</strong> Demandez un{' '}
+                  <strong style={{ color: '#c49e44' }}>VISA TOURISTIQUE</strong> — pas un visa Omra.
+                  Le visa touristique vous permet d&apos;effectuer l&apos;Omra (vous pouvez
+                  sélectionner &laquo; Omra &raquo; comme motif de visite lors de la demande, mais le
+                  type de visa doit bien être &laquo; Touristique &raquo;).
+                </p>
+                <p>
+                  Vérifiez que votre passeport est valable au moins 6 mois après la date
+                  d&apos;arrivée sur le territoire saoudien.
+                </p>
+                <p>🔗 Lien officiel pour faire votre visa :</p>
+              </div>
+              <a
+                href="https://visa.visitsaudi.com/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-block mt-3 px-5 py-2.5 rounded-lg text-sm font-semibold transition-all"
+                style={{ backgroundColor: '#c49e44', color: '#0d2518' }}
+              >
+                Faire son visa →
+              </a>
+            </div>
+
+            {/* Billet d'avion card */}
+            <div
+              className="rounded-xl p-4"
+              style={{ backgroundColor: 'rgba(196,158,68,0.1)', border: '1px solid rgba(196,158,68,0.25)' }}
+            >
+              <div className="text-2xl mb-2">✈️</div>
+              <div className="font-semibold mb-2" style={{ color: '#c49e44' }}>
+                Réserver son billet d&apos;avion
+              </div>
+              <p className="text-sm mb-3" style={{ color: '#f0e8d5', opacity: 0.85 }}>
+                Chaque participant réserve son propre billet. Consultez la section Vols ci-dessus pour
+                les options recommandées. Attendez la confirmation des dates exactes avant de réserver.
+              </p>
+              <div
+                className="rounded-lg p-3 text-sm"
+                style={{ borderLeft: '3px solid #c49e44', backgroundColor: 'rgba(196,158,68,0.12)', color: '#f0e8d5' }}
+              >
+                <strong style={{ color: '#fca5a5' }}>⚠️</strong> Une fois votre billet réservé, pensez
+                à renseigner vos numéros de vol (aller et retour) dans votre inscription — cela nous
+                permet d&apos;organiser les navettes depuis et vers l&apos;aéroport.
+              </div>
+            </div>
+          </div>
+        </SectionCard>
+
+        {/* Section 8 — À faire juste avant de prendre l'avion */}
+        <SectionCard title="🧳 À faire juste avant de prendre l'avion">
+          <div
+            className="rounded-xl p-4 mb-5 text-sm leading-relaxed"
+            style={{ borderLeft: '3px solid #c49e44', backgroundColor: 'rgba(196,158,68,0.12)', color: '#f0e8d5' }}
+          >
+            Les étapes suivantes sont à effectuer le jour du départ ou juste avant de prendre
+            l&apos;avion — pas maintenant.
+          </div>
+          <ul className="space-y-3 mb-5">
+            {[
+              '🚿 Faire les grandes ablutions (ghusl)',
+              '✂️ Se couper les ongles, tailler la barbe, etc.',
+              '🙏 Faire deux Rakatayn (Rakatayn al-ihram)',
+              "👘 Acheter son Ihram et le garder dans les bagages à main (ne pas le mettre en soute)",
+              "📱 Télécharger l'application NUSUK (obligatoire pour l'Omra)",
+              "💉 Vaccin méningite — En pratique, il n'a pas été demandé aux voyageurs ces dernières années, et de nombreux sites confirment qu'il n'est plus obligatoire. Cependant, une ambiguïté subsiste entre certains sites officiels. Chacun est libre de le faire ou non en connaissance de cause.",
+              "📄 Certificat de conversion à l'Islam (pour les convertis) — En pratique, ce document n'est généralement pas demandé à l'entrée du territoire saoudien. Chaque personne concernée prend sa propre décision en connaissance de cause.",
+            ].map((item) => (
+              <li
+                key={item}
+                className="flex items-start gap-3 rounded-xl p-3 text-sm"
+                style={{ backgroundColor: 'rgba(196,158,68,0.08)', border: '1px solid rgba(196,158,68,0.2)', color: '#f0e8d5' }}
+              >
+                <span style={{ color: '#4ade80' }}>✓</span>
+                <span style={{ opacity: 0.9 }}>{item}</span>
+              </li>
+            ))}
+          </ul>
+          <div
+            className="rounded-xl p-4 italic text-sm"
+            style={{ borderLeft: '3px solid #c49e44', backgroundColor: 'rgba(196,158,68,0.08)', color: '#f0e8d5', opacity: 0.9 }}
+          >
+            🕋 La prise d&apos;Ihram se fait à l&apos;escale ou dans l&apos;avion, juste avant de
+            passer les Miqats — gardez votre Ihram dans vos bagages à main, pas en soute.
+          </div>
+        </SectionCard>
+
+        {/* Section 9 — CTA Inscription */}
         <div
           className="rounded-2xl border p-6 md:p-8 mb-8 text-center"
           style={{ borderColor: '#c49e44', backgroundColor: 'rgba(196,158,68,0.1)' }}
@@ -545,15 +808,18 @@ function Step2View({
   fullName,
   existing,
   onSuccess,
+  onBack,
 }: {
   fullName: string
   existing: Registration | null
   onSuccess: (reg: Registration) => void
+  onBack: () => void
 }) {
   const [adults, setAdults] = useState(existing?.adults ?? 1)
   const [children, setChildren] = useState(existing?.children ?? 0)
   const [departureCity, setDepartureCity] = useState(existing?.departureCity ?? '')
-  const [flightPreference, setFlightPreference] = useState(existing?.flightPreference ?? '')
+  const [flightNumberOut, setFlightNumberOut] = useState(existing?.flightNumberOut ?? existing?.flightNumber ?? '')
+  const [flightNumberReturn, setFlightNumberReturn] = useState(existing?.flightNumberReturn ?? '')
   const [proba, setProba] = useState(existing?.proba ?? '')
   const [comment, setComment] = useState(existing?.comment ?? '')
   const [saving, setSaving] = useState(false)
@@ -563,7 +829,7 @@ function Step2View({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!departureCity || !flightPreference || !proba) {
+    if (!departureCity || !proba) {
       setError('Veuillez remplir tous les champs obligatoires.')
       return
     }
@@ -576,7 +842,10 @@ function Step2View({
       adults,
       children,
       departureCity,
-      flightPreference,
+      // flightPreference kept silently for backward compatibility with existing entries
+      ...(existing?.flightPreference ? { flightPreference: existing.flightPreference } : {}),
+      flightNumberOut,
+      flightNumberReturn,
       proba,
       comment,
       date: new Date().toLocaleDateString('fr-FR'),
@@ -607,6 +876,14 @@ function Step2View({
           className="rounded-2xl border p-6 md:p-8"
           style={{ borderColor: '#c49e44', backgroundColor: 'rgba(196,158,68,0.06)' }}
         >
+          <button
+            type="button"
+            onClick={onBack}
+            className="mb-4 inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-all"
+            style={{ border: '2px solid rgba(196,158,68,0.5)', color: '#c49e44', backgroundColor: 'transparent' }}
+          >
+            ← Retour
+          </button>
           <h2
             className="text-2xl font-semibold mb-1"
             style={{ color: '#c49e44', fontFamily: 'Georgia, Palatino, serif' }}
@@ -658,49 +935,6 @@ function Step2View({
               </div>
             </div>
 
-            {/* Flight preference */}
-            <div>
-              <label className="block text-sm font-medium mb-3" style={{ color: '#c49e44' }}>
-                Préférence vol
-              </label>
-              <div className="grid gap-3">
-                <button
-                  type="button"
-                  onClick={() => setFlightPreference('groupe')}
-                  className="text-left px-5 py-4 rounded-xl transition-all"
-                  style={{
-                    backgroundColor: flightPreference === 'groupe' ? 'rgba(196,158,68,0.25)' : 'rgba(196,158,68,0.07)',
-                    border: flightPreference === 'groupe' ? '2px solid #c49e44' : '2px solid rgba(196,158,68,0.3)',
-                    color: '#f0e8d5',
-                  }}
-                >
-                  <div className="font-semibold mb-1" style={{ color: flightPreference === 'groupe' ? '#c49e44' : '#f0e8d5' }}>
-                    🤝 Réservation groupe
-                  </div>
-                  <div className="text-sm" style={{ opacity: 0.75 }}>
-                    Je préfère voyager avec le groupe
-                  </div>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setFlightPreference('individuel')}
-                  className="text-left px-5 py-4 rounded-xl transition-all"
-                  style={{
-                    backgroundColor: flightPreference === 'individuel' ? 'rgba(196,158,68,0.25)' : 'rgba(196,158,68,0.07)',
-                    border: flightPreference === 'individuel' ? '2px solid #c49e44' : '2px solid rgba(196,158,68,0.3)',
-                    color: '#f0e8d5',
-                  }}
-                >
-                  <div className="font-semibold mb-1" style={{ color: flightPreference === 'individuel' ? '#c49e44' : '#f0e8d5' }}>
-                    ✈️ Billet individuel
-                  </div>
-                  <div className="text-sm" style={{ opacity: 0.75 }}>
-                    Je gère mon propre billet et mon transport à l&apos;arrivée
-                  </div>
-                </button>
-              </div>
-            </div>
-
             {/* Certitude */}
             <div>
               <label className="block text-sm font-medium mb-3" style={{ color: '#c49e44' }}>
@@ -724,6 +958,44 @@ function Step2View({
                   </button>
                 ))}
               </div>
+            </div>
+
+            {/* Flight numbers */}
+            <div>
+              <label className="block text-sm font-medium mb-2" style={{ color: '#c49e44' }}>
+                Numéro de vol — Aller <span style={{ opacity: 0.5, fontWeight: 'normal' }}>(optionnel)</span>
+              </label>
+              <input
+                type="text"
+                value={flightNumberOut}
+                onChange={(e) => setFlightNumberOut(e.target.value)}
+                className="w-full rounded-lg px-4 py-3 text-base outline-none"
+                style={{
+                  backgroundColor: 'rgba(13,37,24,0.9)',
+                  border: '1px solid rgba(196,158,68,0.4)',
+                  color: '#f0e8d5',
+                }}
+                placeholder="Ex : W6 2137, TO 7895..."
+              />
+              <label className="block text-sm font-medium mb-2 mt-4" style={{ color: '#c49e44' }}>
+                Numéro de vol — Retour <span style={{ opacity: 0.5, fontWeight: 'normal' }}>(optionnel)</span>
+              </label>
+              <input
+                type="text"
+                value={flightNumberReturn}
+                onChange={(e) => setFlightNumberReturn(e.target.value)}
+                className="w-full rounded-lg px-4 py-3 text-base outline-none"
+                style={{
+                  backgroundColor: 'rgba(13,37,24,0.9)',
+                  border: '1px solid rgba(196,158,68,0.4)',
+                  color: '#f0e8d5',
+                }}
+                placeholder="Ex : TO 7896, W6 2138..."
+              />
+              <p className="text-xs mt-1" style={{ color: '#f0e8d5', opacity: 0.5 }}>
+                Indiquez les vols que vous envisagez de prendre. Cela nous aide à organiser les
+                navettes depuis et vers l&apos;aéroport. Vous pourrez les modifier plus tard.
+              </p>
             </div>
 
             {/* Comment */}
@@ -813,10 +1085,12 @@ function Step3View({
               { label: 'Enfants', value: registration.children.toString() },
               { label: 'Total personnes', value: (registration.adults + registration.children).toString() },
               { label: 'Ville de départ', value: registration.departureCity },
-              {
-                label: 'Préférence vol',
-                value: registration.flightPreference === 'groupe' ? '🤝 Réservation groupe' : '✈️ Billet individuel',
-              },
+              ...(registration.flightNumberOut
+                ? [{ label: 'Vol — Aller', value: registration.flightNumberOut }]
+                : []),
+              ...(registration.flightNumberReturn
+                ? [{ label: 'Vol — Retour', value: registration.flightNumberReturn }]
+                : []),
             ].map((item) => (
               <div key={item.label} className="flex justify-between items-start gap-4">
                 <dt className="text-sm" style={{ color: '#f0e8d5', opacity: 0.65 }}>
@@ -926,7 +1200,7 @@ export default function Page() {
     return <Step1View onFound={handleFound} onNew={handleNew} />
   }
   if (view === 'step2') {
-    return <Step2View fullName={fullName} existing={existingReg} onSuccess={handleSuccess} />
+    return <Step2View fullName={fullName} existing={existingReg} onSuccess={handleSuccess} onBack={() => setView('step1')} />
   }
   if (view === 'step3' && confirmedReg) {
     return <Step3View registration={confirmedReg} onHome={handleHome} />
