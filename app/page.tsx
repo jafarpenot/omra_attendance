@@ -653,9 +653,11 @@ function HomeView({
 function Step1View({
   onFound,
   onNew,
+  onCancel,
 }: {
   onFound: (reg: Registration) => void
   onNew: (name: string) => void
+  onCancel: () => void
 }) {
   const [prenom, setPrenom] = useState('')
   const [nom, setNom] = useState('')
@@ -713,6 +715,14 @@ function Step1View({
           className="rounded-2xl border p-6 md:p-8"
           style={{ borderColor: '#c49e44', backgroundColor: 'rgba(196,158,68,0.06)' }}
         >
+          <button
+            type="button"
+            onClick={onCancel}
+            className="mb-4 inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-all"
+            style={{ border: '2px solid rgba(196,158,68,0.5)', color: '#c49e44', backgroundColor: 'transparent' }}
+          >
+            ← Retour à l&apos;accueil
+          </button>
           <h2
             className="text-2xl font-semibold mb-2"
             style={{ color: '#c49e44', fontFamily: 'Georgia, Palatino, serif' }}
@@ -1211,7 +1221,7 @@ export default function Page() {
     return <HomeView onRegister={handleRegisterClick} count={count} />
   }
   if (view === 'step1') {
-    return <Step1View onFound={handleFound} onNew={handleNew} />
+    return <Step1View onFound={handleFound} onNew={handleNew} onCancel={handleHome} />
   }
   if (view === 'step2') {
     return <Step2View fullName={fullName} existing={existingReg} onSuccess={handleSuccess} onBack={() => setView('step1')} />
