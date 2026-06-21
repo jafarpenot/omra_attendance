@@ -20,6 +20,17 @@ interface Registration {
   date: string
 }
 
+/** Normalize a name for matching: lowercase, strip accents, collapse whitespace.
+ *  Ensures "Jack Jhonson", "jack jhonson" and "  Jack  Jhonson " all match. */
+function normalizeName(s: string): string {
+  return s
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '') // strip combining accent marks
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, ' ')
+}
+
 const PROBA_CONFIG: Record<string, { label: string; emoji: string; color: string; bg: string }> = {
   certain: { label: 'Certain(e)', emoji: '✅', color: '#16a34a', bg: '#14532d' },
   probable: { label: 'Très probable', emoji: '🟢', color: '#22c55e', bg: '#14532d' },
@@ -665,12 +676,12 @@ function Step1View({
     const fullName = `${prenom.trim()} ${nom.trim()}`.trim()
     if (!fullName) return
 
-    const normName = fullName.toLowerCase()
-    const normNom = nom.trim().toLowerCase()
+    const normName = normalizeName(fullName)
+    const normNom = normalizeName(nom)
 
-    // Exact match (case-insensitive)
+    // Exact match (case / accent / whitespace insensitive)
     const exact = registrations.find(
-      (r) => r.name.toLowerCase() === normName
+      (r) => normalizeName(r.name) === normName
     )
     if (exact) {
       onFound(exact)
@@ -678,10 +689,13 @@ function Step1View({
     }
 
     // Same last name, different first name
-    const sameLastName = registrations.filter((r) =>
-      r.name.toLowerCase().split(' ').slice(1).join(' ') === normNom ||
-      r.name.toLowerCase().endsWith(' ' + normNom)
-    )
+    const sameLastName = registrations.filter((r) => {
+      const norm = normalizeName(r.name)
+      return (
+        norm.split(' ').slice(1).join(' ') === normNom ||
+        norm.endsWith(' ' + normNom)
+      )
+    })
     if (sameLastName.length > 0) {
       setMatches(sameLastName)
       return
