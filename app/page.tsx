@@ -5,6 +5,13 @@ import Link from 'next/link'
 
 type View = 'home' | 'step1' | 'step2' | 'step3'
 
+interface Person {
+  type: 'adulte' | 'enfant'
+  passportNumber: string
+  nationality: string
+  birthDate: string
+}
+
 interface Registration {
   id: number | string
   name: string
@@ -15,9 +22,23 @@ interface Registration {
   flightNumber?: string // legacy single-flight field — migrated into flightNumberOut
   flightNumberOut?: string
   flightNumberReturn?: string
+  flightDateOut?: string
+  flightDateReturn?: string
   proba: string
   comment?: string
   date: string
+  persons?: Person[] // kept optional — absent on registrations created before this field existed
+}
+
+/** Build the per-person list to match the current adults/children counts,
+ *  reusing already-entered data (by type + position) and trimming/padding as needed. */
+function buildPersons(adults: number, children: number, current: Person[]): Person[] {
+  const blank = (type: Person['type']): Person => ({ type, passportNumber: '', nationality: '', birthDate: '' })
+  const adultsCurrent = current.filter((p) => p.type === 'adulte')
+  const childrenCurrent = current.filter((p) => p.type === 'enfant')
+  const newAdults = Array.from({ length: adults }, (_, i) => adultsCurrent[i] ?? blank('adulte'))
+  const newChildren = Array.from({ length: children }, (_, i) => childrenCurrent[i] ?? blank('enfant'))
+  return [...newAdults, ...newChildren]
 }
 
 /** Normalize a name for matching: lowercase, strip accents, collapse whitespace.
@@ -844,12 +865,27 @@ function Step2View({
   const [departureCity, setDepartureCity] = useState(existing?.departureCity ?? '')
   const [flightNumberOut, setFlightNumberOut] = useState(existing?.flightNumberOut ?? existing?.flightNumber ?? '')
   const [flightNumberReturn, setFlightNumberReturn] = useState(existing?.flightNumberReturn ?? '')
+  const [flightDateOut, setFlightDateOut] = useState(existing?.flightDateOut ?? '')
+  const [flightDateReturn, setFlightDateReturn] = useState(existing?.flightDateReturn ?? '')
   const [proba, setProba] = useState(existing?.proba ?? '')
   const [comment, setComment] = useState(existing?.comment ?? '')
+  const [persons, setPersons] = useState<Person[]>(() =>
+    buildPersons(existing?.adults ?? 1, existing?.children ?? 0, existing?.persons ?? [])
+  )
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
   const isEditing = !!existing
+
+  // Keep the per-person list in sync with the adults/children counters,
+  // preserving already-entered data.
+  useEffect(() => {
+    setPersons((prev) => buildPersons(adults, children, prev))
+  }, [adults, children])
+
+  const updatePerson = (index: number, field: keyof Omit<Person, 'type'>, value: string) => {
+    setPersons((prev) => prev.map((p, i) => (i === index ? { ...p, [field]: value } : p)))
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -870,8 +906,11 @@ function Step2View({
       ...(existing?.flightPreference ? { flightPreference: existing.flightPreference } : {}),
       flightNumberOut,
       flightNumberReturn,
+      flightDateOut,
+      flightDateReturn,
       proba,
       comment,
+      persons,
       date: new Date().toLocaleDateString('fr-FR'),
     }
 
@@ -933,6 +972,64 @@ function Step2View({
                 Nombre d&apos;enfants
               </label>
               <Counter value={children} min={0} onChange={setChildren} />
+            </div>
+
+            {/* Per-person details */}
+            <div>
+              <label className="block text-sm font-medium mb-1" style={{ color: '#c49e44' }}>
+                Informations par personne{' '}
+                <span style={{ opacity: 0.5, fontWeight: 'normal' }}>(optionnel — pour le visa)</span>
+              </label>
+              <p className="text-xs mb-3" style={{ color: '#f0e8d5', opacity: 0.5 }}>
+                Passeport, nationalité et date de naissance de chaque adulte / enfant. Vous pouvez les
+                compléter plus tard.
+              </p>
+              <div className="space-y-4">
+                {persons.map((p, i) => {
+                  const rank = i < adults ? i + 1 : i - adults + 1
+                  return (
+                    <div
+                      key={i}
+                      className="rounded-xl p-4"
+                      style={{ backgroundColor: 'rgba(13,37,24,0.6)', border: '1px solid rgba(196,158,68,0.25)' }}
+                    >
+                      <div className="text-xs font-semibold mb-3 uppercase tracking-wider" style={{ color: '#c49e44', opacity: 0.8 }}>
+                        {p.type === 'adulte' ? `Adulte ${rank}` : `Enfant ${rank}`}
+                      </div>
+                      <div className="grid md:grid-cols-2 gap-3">
+                        <input
+                          type="text"
+                          value={p.passportNumber}
+                          onChange={(e) => updatePerson(i, 'passportNumber', e.target.value)}
+                          className="w-full rounded-lg px-4 py-2.5 text-sm outline-none"
+                          style={{ backgroundColor: 'rgba(13,37,24,0.9)', border: '1px solid rgba(196,158,68,0.4)', color: '#f0e8d5' }}
+                          placeholder="Numéro de passeport"
+                        />
+                        <input
+                          type="text"
+                          value={p.nationality}
+                          onChange={(e) => updatePerson(i, 'nationality', e.target.value)}
+                          className="w-full rounded-lg px-4 py-2.5 text-sm outline-none"
+                          style={{ backgroundColor: 'rgba(13,37,24,0.9)', border: '1px solid rgba(196,158,68,0.4)', color: '#f0e8d5' }}
+                          placeholder="Nationalité"
+                        />
+                        <div>
+                          <label className="block text-xs mb-1" style={{ color: '#f0e8d5', opacity: 0.6 }}>
+                            Date de naissance
+                          </label>
+                          <input
+                            type="date"
+                            value={p.birthDate}
+                            onChange={(e) => updatePerson(i, 'birthDate', e.target.value)}
+                            className="w-full rounded-lg px-4 py-2.5 text-sm outline-none"
+                            style={{ backgroundColor: 'rgba(13,37,24,0.9)', border: '1px solid rgba(196,158,68,0.4)', color: '#f0e8d5' }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
             </div>
 
             {/* Departure city */}
@@ -1001,6 +1098,21 @@ function Step2View({
                 }}
                 placeholder="Ex : W6 2137, TO 7895..."
               />
+              <label className="block text-xs mb-1 mt-2" style={{ color: '#f0e8d5', opacity: 0.6 }}>
+                Date de départ <span style={{ opacity: 0.7 }}>(optionnel)</span>
+              </label>
+              <input
+                type="date"
+                value={flightDateOut}
+                onChange={(e) => setFlightDateOut(e.target.value)}
+                className="w-full rounded-lg px-4 py-3 text-base outline-none"
+                style={{
+                  backgroundColor: 'rgba(13,37,24,0.9)',
+                  border: '1px solid rgba(196,158,68,0.4)',
+                  color: '#f0e8d5',
+                }}
+              />
+
               <label className="block text-sm font-medium mb-2 mt-4" style={{ color: '#c49e44' }}>
                 Numéro de vol — Retour <span style={{ opacity: 0.5, fontWeight: 'normal' }}>(optionnel)</span>
               </label>
@@ -1015,6 +1127,20 @@ function Step2View({
                   color: '#f0e8d5',
                 }}
                 placeholder="Ex : TO 7896, W6 2138..."
+              />
+              <label className="block text-xs mb-1 mt-2" style={{ color: '#f0e8d5', opacity: 0.6 }}>
+                Date d&apos;arrivée <span style={{ opacity: 0.7 }}>(optionnel)</span>
+              </label>
+              <input
+                type="date"
+                value={flightDateReturn}
+                onChange={(e) => setFlightDateReturn(e.target.value)}
+                className="w-full rounded-lg px-4 py-3 text-base outline-none"
+                style={{
+                  backgroundColor: 'rgba(13,37,24,0.9)',
+                  border: '1px solid rgba(196,158,68,0.4)',
+                  color: '#f0e8d5',
+                }}
               />
               <p className="text-xs mt-1" style={{ color: '#f0e8d5', opacity: 0.5 }}>
                 Indiquez les vols que vous envisagez de prendre. Cela nous aide à organiser les
@@ -1112,8 +1238,14 @@ function Step3View({
               ...(registration.flightNumberOut
                 ? [{ label: 'Vol — Aller', value: registration.flightNumberOut }]
                 : []),
+              ...(registration.flightDateOut
+                ? [{ label: 'Date de départ', value: registration.flightDateOut }]
+                : []),
               ...(registration.flightNumberReturn
                 ? [{ label: 'Vol — Retour', value: registration.flightNumberReturn }]
+                : []),
+              ...(registration.flightDateReturn
+                ? [{ label: "Date d'arrivée", value: registration.flightDateReturn }]
                 : []),
             ].map((item) => (
               <div key={item.label} className="flex justify-between items-start gap-4">
@@ -1158,6 +1290,49 @@ function Step3View({
             </div>
           </dl>
         </div>
+
+        {/* Per-person details, only shown if at least one field was filled in */}
+        {registration.persons?.some((p) => p.passportNumber || p.nationality || p.birthDate) && (
+          <div
+            className="rounded-2xl border p-6 mb-6"
+            style={{ borderColor: '#c49e44', backgroundColor: 'rgba(196,158,68,0.06)' }}
+          >
+            <h3 className="text-lg font-semibold mb-4" style={{ color: '#c49e44' }}>
+              Informations par personne
+            </h3>
+            <div className="space-y-4">
+              {registration.persons.map((p, i) => {
+                const adultsCount = registration.adults
+                const rank = i < adultsCount ? i + 1 : i - adultsCount + 1
+                return (
+                  <div key={i}>
+                    <div className="text-xs font-semibold mb-2 uppercase tracking-wider" style={{ color: '#c49e44', opacity: 0.8 }}>
+                      {p.type === 'adulte' ? `Adulte ${rank}` : `Enfant ${rank}`}
+                    </div>
+                    <dl className="space-y-1">
+                      {[
+                        { label: 'Passeport', value: p.passportNumber },
+                        { label: 'Nationalité', value: p.nationality },
+                        { label: 'Naissance', value: p.birthDate },
+                      ]
+                        .filter((item) => item.value)
+                        .map((item) => (
+                          <div key={item.label} className="flex justify-between items-start gap-4">
+                            <dt className="text-sm" style={{ color: '#f0e8d5', opacity: 0.65 }}>
+                              {item.label}
+                            </dt>
+                            <dd className="text-sm font-medium text-right" style={{ color: '#f0e8d5' }}>
+                              {item.value}
+                            </dd>
+                          </div>
+                        ))}
+                    </dl>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
 
         <button
           onClick={onHome}

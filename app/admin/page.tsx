@@ -3,6 +3,13 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 
+interface Person {
+  type: 'adulte' | 'enfant'
+  passportNumber: string
+  nationality: string
+  birthDate: string
+}
+
 interface Registration {
   id: number | string
   name: string
@@ -13,9 +20,12 @@ interface Registration {
   flightNumber?: string // legacy single-flight field
   flightNumberOut?: string
   flightNumberReturn?: string
+  flightDateOut?: string
+  flightDateReturn?: string
   proba: string
   comment?: string
   date: string
+  persons?: Person[] // absent on registrations created before this field existed
 }
 
 const PROBA_CONFIG: Record<string, { label: string; emoji: string; color: string; bg: string; weight: number }> = {
@@ -268,11 +278,13 @@ function AdminDashboard({ registrations }: { registrations: Registration[] }) {
                     {(r.flightNumberOut || r.flightNumber) && (
                       <span style={{ color: '#f0e8d5', opacity: 0.55 }}>
                         🛫 {r.flightNumberOut || r.flightNumber}
+                        {r.flightDateOut ? ` (${r.flightDateOut})` : ''}
                       </span>
                     )}
                     {r.flightNumberReturn && (
                       <span style={{ color: '#f0e8d5', opacity: 0.55 }}>
                         🛬 {r.flightNumberReturn}
+                        {r.flightDateReturn ? ` (${r.flightDateReturn})` : ''}
                       </span>
                     )}
                   </div>
@@ -280,6 +292,23 @@ function AdminDashboard({ registrations }: { registrations: Registration[] }) {
                     <p className="mt-2 text-sm italic" style={{ color: '#f0e8d5', opacity: 0.6 }}>
                       &ldquo;{r.comment}&rdquo;
                     </p>
+                  )}
+                  {r.persons?.some((p) => p.passportNumber || p.nationality || p.birthDate) && (
+                    <div className="mt-3 pt-3 border-t space-y-1" style={{ borderColor: 'rgba(196,158,68,0.15)' }}>
+                      {r.persons.map((p, i) => {
+                        const rank = i < r.adults ? i + 1 : i - r.adults + 1
+                        return (
+                        <div key={i} className="text-xs flex flex-wrap gap-2" style={{ color: '#f0e8d5', opacity: 0.6 }}>
+                          <span style={{ color: '#c49e44' }}>
+                            {p.type === 'adulte' ? `🧑 Adulte ${rank}` : `🧒 Enfant ${rank}`}
+                          </span>
+                          {p.passportNumber && <span>🛂 {p.passportNumber}</span>}
+                          {p.nationality && <span>🌍 {p.nationality}</span>}
+                          {p.birthDate && <span>🎂 {p.birthDate}</span>}
+                        </div>
+                        )
+                      })}
+                    </div>
                   )}
                 </div>
               ))}
