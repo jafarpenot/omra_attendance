@@ -191,6 +191,49 @@ function HomeView({
           </div>
         </SectionCard>
 
+        {/* Section — CTA Inscription */}
+        <div
+          className="rounded-2xl border p-6 md:p-8 mb-8 text-center"
+          style={{ borderColor: '#c49e44', backgroundColor: 'rgba(196,158,68,0.1)' }}
+        >
+          <h2
+            className="text-xl md:text-2xl font-semibold mb-3"
+            style={{ color: '#c49e44', fontFamily: 'Georgia, Palatino, serif' }}
+          >
+            📝 Inscription
+          </h2>
+          {count !== null && (
+            <p className="mb-5 text-sm" style={{ color: '#f0e8d5', opacity: 0.8 }}>
+              <strong style={{ color: '#c49e44' }}>{count.families}</strong> famille(s) inscrite(s)
+              &nbsp;·&nbsp;
+              <strong style={{ color: '#c49e44' }}>{count.persons}</strong> personne(s) au total
+            </p>
+          )}
+          {count === null && (
+            <p className="mb-5 text-sm" style={{ color: '#f0e8d5', opacity: 0.5 }}>
+              Chargement des inscriptions…
+            </p>
+          )}
+          <button
+            onClick={onRegister}
+            className="inline-block px-8 py-4 rounded-xl text-lg font-semibold transition-all"
+            style={{ backgroundColor: '#c49e44', color: '#0d2518' }}
+            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#d4af54')}
+            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#c49e44')}
+          >
+            S&apos;inscrire / Modifier mon inscription
+          </button>
+          <div className="mt-5">
+            <Link
+              href="/admin"
+              className="text-xs"
+              style={{ color: '#f0e8d5', opacity: 0.35 }}
+            >
+              Accès organisateur
+            </Link>
+          </div>
+        </div>
+
         {/* Section 2 — Notice importante */}
         <div
           className="rounded-2xl border-2 p-6 md:p-8 mb-8"
@@ -616,49 +659,6 @@ function HomeView({
             passer les Miqats — gardez votre Ihram dans vos bagages à main, pas en soute.
           </div>
         </SectionCard>
-
-        {/* Section 9 — CTA Inscription */}
-        <div
-          className="rounded-2xl border p-6 md:p-8 mb-8 text-center"
-          style={{ borderColor: '#c49e44', backgroundColor: 'rgba(196,158,68,0.1)' }}
-        >
-          <h2
-            className="text-xl md:text-2xl font-semibold mb-3"
-            style={{ color: '#c49e44', fontFamily: 'Georgia, Palatino, serif' }}
-          >
-            📝 Inscription
-          </h2>
-          {count !== null && (
-            <p className="mb-5 text-sm" style={{ color: '#f0e8d5', opacity: 0.8 }}>
-              <strong style={{ color: '#c49e44' }}>{count.families}</strong> famille(s) inscrite(s)
-              &nbsp;·&nbsp;
-              <strong style={{ color: '#c49e44' }}>{count.persons}</strong> personne(s) au total
-            </p>
-          )}
-          {count === null && (
-            <p className="mb-5 text-sm" style={{ color: '#f0e8d5', opacity: 0.5 }}>
-              Chargement des inscriptions…
-            </p>
-          )}
-          <button
-            onClick={onRegister}
-            className="inline-block px-8 py-4 rounded-xl text-lg font-semibold transition-all"
-            style={{ backgroundColor: '#c49e44', color: '#0d2518' }}
-            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#d4af54')}
-            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#c49e44')}
-          >
-            S&apos;inscrire / Modifier mon inscription
-          </button>
-          <div className="mt-5">
-            <Link
-              href="/admin"
-              className="text-xs"
-              style={{ color: '#f0e8d5', opacity: 0.35 }}
-            >
-              Accès organisateur
-            </Link>
-          </div>
-        </div>
       </main>
 
       <footer className="text-center py-6 px-4 border-t" style={{ borderColor: 'rgba(196,158,68,0.2)' }}>
