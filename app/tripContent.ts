@@ -138,7 +138,3 @@ export const EMERGENCY_CONTACTS: { name: string; phone: string }[] = [
 
 export const PRACTICAL_NOTE =
   "Taux légal indicatif : 1 € = 4,26 riyals saoudiens. Inscrivez-vous sur Nusuk pour la Rawda Charifa et le Zamzam à l'aéroport."
-
-export const DOWNLOADS: { label: string; href: string }[] = [
-  { label: 'Fiche Omra 2026 — contacts, hôtels, programme (PDF)', href: '/docs/fiche-omra-2026.pdf' },
-]

@@ -38,3 +38,6 @@ yarn-error.log*
 # raw source material with personal data (names, phone numbers) —
 # the usable content is already extracted into app/tripContent.ts
 modif_umrah_time/
+
+# has real names + phone numbers baked into the PDF itself — not deployed
+public/docs/

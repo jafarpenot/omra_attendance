@@ -18,7 +18,6 @@ import {
   EMERGENCY_CONTACTS,
   PRACTICAL_NOTE,
   WIFI_PASSWORD,
-  DOWNLOADS,
 } from './tripContent'
 
 // One color per group, cycled — lets the same group be spotted at a glance
@@ -456,23 +455,6 @@ function HomeView({
               </div>
             )
           })}
-        </SectionCard>
-
-        {/* Downloads */}
-        <SectionCard title="📄 Documents à télécharger">
-          <div className="flex flex-col gap-3">
-            {DOWNLOADS.map((d) => (
-              <a
-                key={d.href}
-                href={d.href}
-                download
-                className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-sm font-semibold transition-all"
-                style={{ backgroundColor: 'rgba(196,158,68,0.12)', border: '1px solid rgba(196,158,68,0.3)', color: '#c49e44' }}
-              >
-                ⬇️ {d.label}
-              </a>
-            ))}
-          </div>
         </SectionCard>
 
         {/* Section — Inscription (gardé, déplacé en bas de page) */}
