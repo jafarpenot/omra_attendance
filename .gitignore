@@ -34,3 +34,7 @@ yarn-error.log*
 *.pem
 .idea/
 .vscode/
+
+# raw source material with personal data (names, phone numbers) —
+# the usable content is already extracted into app/tripContent.ts
+modif_umrah_time/

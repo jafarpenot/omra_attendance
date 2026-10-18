@@ -2,6 +2,46 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
+import { normalizeName } from './lib/normalizeName'
+import {
+  SAFETY_CHECKLIST,
+  MEAL_INFO,
+  ARRIVALS,
+  ARRIVALS_TOTAL,
+  ARRIVALS_NOTE,
+  ZIYARA_PLAN,
+  ZIYARA_NOTE,
+  MATAF_PHOTOS,
+  ROOM_GROUPS,
+  HOTELS,
+  EMERGENCY_CONTACTS,
+  PRACTICAL_NOTE,
+  WIFI_PASSWORD,
+  DOWNLOADS,
+} from './tripContent'
+
+// One color per group, cycled — lets the same group be spotted at a glance
+// across both the "Groupes d'arrivée" and "Qui partage ma chambre" sections,
+// echoing the color-coding from the organizer's original room sheet.
+const GROUP_COLORS = [
+  '#86efac', // vert
+  '#93c5fd', // bleu
+  '#fdba74', // orange
+  '#d8b4fe', // lilas
+  '#5eead4', // turquoise
+  '#f9a8d4', // rose
+  '#d1d5db', // gris
+  '#bef264', // vert anis
+  '#fca5a5', // rouge/saumon
+  '#67e8f9', // cyan
+  '#f0abfc', // magenta
+  '#fcd34d', // ambre
+  '#a5b4fc', // indigo
+]
+function groupColor(i: number): string {
+  return GROUP_COLORS[i % GROUP_COLORS.length]
+}
 
 type View = 'home' | 'step1' | 'step2' | 'step3'
 
@@ -39,17 +79,6 @@ function buildPersons(adults: number, children: number, current: Person[]): Pers
   const newAdults = Array.from({ length: adults }, (_, i) => adultsCurrent[i] ?? blank('adulte'))
   const newChildren = Array.from({ length: children }, (_, i) => childrenCurrent[i] ?? blank('enfant'))
   return [...newAdults, ...newChildren]
-}
-
-/** Normalize a name for matching: lowercase, strip accents, collapse whitespace.
- *  Ensures "Jack Jhonson", "jack jhonson" and "  Jack  Jhonson " all match. */
-function normalizeName(s: string): string {
-  return s
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '') // strip combining accent marks
-    .toLowerCase()
-    .trim()
-    .replace(/\s+/g, ' ')
 }
 
 const PROBA_CONFIG: Record<string, { label: string; emoji: string; color: string; bg: string }> = {
@@ -161,37 +190,292 @@ function HomeView({
       <Header />
 
       <main className="max-w-3xl mx-auto px-4 pb-16">
-        {/* Section 1 — Informations du voyage */}
-        <SectionCard title="📍 Informations du voyage">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {[
-              { label: 'Dates', value: '~18 – 28 oct. 2026', sub: '(± 1 jour)' },
-              { label: 'Villes', value: 'Makkah → Medine', sub: '' },
-              { label: 'Durée', value: '~10 jours', sub: '~3 j. à La Mecque + ~7 j. à Médine' },
-              { label: 'Départ', value: 'Lyon & Paris', sub: '' },
-            ].map((item) => (
+        {/* Section 1 — À vérifier avant de partir */}
+        <div
+          className="rounded-2xl border-2 p-6 md:p-8 mb-8"
+          style={{ borderColor: '#dc2626', backgroundColor: 'rgba(220,38,38,0.07)' }}
+        >
+          <h2
+            className="text-xl md:text-2xl font-semibold mb-4"
+            style={{ color: '#fca5a5', fontFamily: 'Georgia, Palatino, serif' }}
+          >
+            ⚠️ À vérifier avant de partir
+          </h2>
+          <ul className="space-y-2.5">
+            {SAFETY_CHECKLIST.map((item) => (
+              <li
+                key={item}
+                className="flex items-start gap-3 text-base font-medium"
+                style={{ color: '#f0e8d5' }}
+              >
+                <span style={{ color: '#fca5a5' }}>•</span>
+                <span>{item}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        {/* Section 2 — Groupes d'arrivée */}
+        <SectionCard title="✈️ Groupes d'arrivée">
+          <p className="text-sm mb-4" style={{ color: '#f0e8d5', opacity: 0.75 }}>
+            Tableau des arrivées — qui arrive quand, pour former de petits groupes et faire l&apos;Omra
+            ensemble.
+          </p>
+          <div className="space-y-2 mb-4">
+            {ARRIVALS.map((a, i) => (
               <div
-                key={item.label}
-                className="rounded-xl p-4 text-center"
+                key={i}
+                className="flex items-center gap-3 rounded-xl p-3 text-sm"
+                style={{ backgroundColor: 'rgba(196,158,68,0.08)', border: '1px solid rgba(196,158,68,0.2)' }}
+              >
+                <div className="text-xs font-semibold whitespace-nowrap" style={{ color: '#c49e44', minWidth: '5.5rem' }}>
+                  {a.date}
+                </div>
+                <div className="text-xs whitespace-nowrap" style={{ color: '#f0e8d5', opacity: 0.6, minWidth: '3rem' }}>
+                  {a.time}
+                </div>
+                <div className="flex-1" style={{ color: '#f0e8d5' }}>
+                  {a.name}
+                </div>
+                <div
+                  className="text-xs font-semibold px-2 py-1 rounded-full whitespace-nowrap"
+                  style={{ backgroundColor: 'rgba(196,158,68,0.15)', color: '#c49e44' }}
+                >
+                  {a.count} pers.
+                </div>
+              </div>
+            ))}
+          </div>
+          <p className="text-sm font-semibold mb-2" style={{ color: '#c49e44' }}>
+            Total : {ARRIVALS_TOTAL} personnes
+          </p>
+          <p className="text-xs italic" style={{ color: '#f0e8d5', opacity: 0.6 }}>{ARRIVALS_NOTE}</p>
+        </SectionCard>
+
+        {/* Section 3 — Hôtels et contacts d'urgence */}
+        <SectionCard title="🏨 Hôtels et contacts d'urgence">
+          <div className="grid md:grid-cols-2 gap-4 mb-5">
+            {HOTELS.map((h) => (
+              <div
+                key={h.city}
+                className="rounded-xl p-4"
                 style={{ backgroundColor: 'rgba(196,158,68,0.1)', border: '1px solid rgba(196,158,68,0.25)' }}
               >
-                <div className="text-xs uppercase tracking-wider mb-2" style={{ color: '#c49e44', opacity: 0.8 }}>
-                  {item.label}
+                <div className="text-xs px-2 py-0.5 rounded-full font-semibold inline-block mb-2" style={{ backgroundColor: '#c49e44', color: '#0d2518' }}>
+                  {h.city}
                 </div>
-                <div className="font-semibold text-sm" style={{ color: '#f0e8d5' }}>
-                  {item.value}
+                <div className="font-semibold text-sm mb-1" style={{ color: '#c49e44' }}>{h.hotelName}</div>
+                <p className="text-sm mb-2" style={{ color: '#f0e8d5', opacity: 0.85 }}>{h.hotelAddress}</p>
+                <a
+                  href={h.mapsUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs underline"
+                  style={{ color: '#c49e44' }}
+                >
+                  Voir sur Google Maps →
+                </a>
+              </div>
+            ))}
+          </div>
+
+          <div
+            className="rounded-xl p-3 mb-5 flex items-center gap-2 text-sm"
+            style={{ backgroundColor: 'rgba(196,158,68,0.1)', border: '1px solid rgba(196,158,68,0.25)' }}
+          >
+            <span style={{ color: '#c49e44' }}>📶 Wifi hôtel :</span>
+            <strong style={{ color: '#f0e8d5', letterSpacing: '0.05em' }}>{WIFI_PASSWORD}</strong>
+          </div>
+
+          <div className="font-semibold mb-3" style={{ color: '#c49e44' }}>
+            Contacts d&apos;urgence — WhatsApp uniquement
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+            {EMERGENCY_CONTACTS.map((c) => (
+              <a
+                key={c.name}
+                href={c.phone ? `https://wa.me/${c.phone.replace(/[^0-9]/g, '')}` : undefined}
+                target={c.phone ? '_blank' : undefined}
+                rel={c.phone ? 'noopener noreferrer' : undefined}
+                className="rounded-xl p-3 text-center text-sm font-semibold"
+                style={{
+                  backgroundColor: 'rgba(196,158,68,0.1)',
+                  border: '1px solid rgba(196,158,68,0.25)',
+                  color: c.phone ? '#c49e44' : '#f0e8d5',
+                  opacity: c.phone ? 1 : 0.5,
+                  cursor: c.phone ? 'pointer' : 'default',
+                }}
+              >
+                {c.name}
+                {!c.phone && <div className="text-xs font-normal mt-1">(voir PDF)</div>}
+              </a>
+            ))}
+          </div>
+          <p className="text-xs italic" style={{ color: '#f0e8d5', opacity: 0.6 }}>{PRACTICAL_NOTE}</p>
+        </SectionCard>
+
+        {/* Section 4 — Repas et ziyara */}
+        <SectionCard title="🍽 Repas et ziyara">
+          <div
+            className="rounded-xl p-4 mb-5"
+            style={{ backgroundColor: 'rgba(196,158,68,0.1)', border: '1px solid rgba(196,158,68,0.25)' }}
+          >
+            <div className="grid grid-cols-2 gap-4 mb-3">
+              <div>
+                <div className="text-xs uppercase tracking-wider mb-1" style={{ color: '#c49e44', opacity: 0.8 }}>
+                  1er repas
                 </div>
-                {item.sub && (
-                  <div className="text-xs mt-1" style={{ color: '#f0e8d5', opacity: 0.6 }}>
-                    {item.sub}
+                <div className="font-semibold text-sm" style={{ color: '#f0e8d5' }}>{MEAL_INFO.first}</div>
+              </div>
+              <div>
+                <div className="text-xs uppercase tracking-wider mb-1" style={{ color: '#c49e44', opacity: 0.8 }}>
+                  2e repas
+                </div>
+                <div className="font-semibold text-sm" style={{ color: '#f0e8d5' }}>{MEAL_INFO.second}</div>
+              </div>
+            </div>
+            <p className="text-sm font-semibold mb-1" style={{ color: '#fca5a5' }}>
+              ⚠️ {MEAL_INFO.lateRule}
+            </p>
+            <p className="text-xs" style={{ color: '#f0e8d5', opacity: 0.7 }}>{MEAL_INFO.note}</p>
+          </div>
+
+          <div className="font-semibold mb-3" style={{ color: '#c49e44' }}>
+            Programme des ziyarat
+          </div>
+          <div className="space-y-2 mb-3">
+            {ZIYARA_PLAN.map((z, i) => (
+              <div
+                key={i}
+                className="flex items-start gap-3 rounded-xl p-3 text-sm"
+                style={{ backgroundColor: 'rgba(196,158,68,0.08)', border: '1px solid rgba(196,158,68,0.2)' }}
+              >
+                <div className="text-xs font-semibold whitespace-nowrap pt-0.5" style={{ color: '#c49e44', minWidth: '5.5rem' }}>
+                  {z.date}
+                </div>
+                <div className="flex-1">
+                  <div style={{ color: '#f0e8d5' }}>{z.place}</div>
+                  <div className="text-xs mt-0.5" style={{ color: '#f0e8d5', opacity: 0.6 }}>
+                    {z.time}{z.city !== '—' ? ` · ${z.city}` : ''}
                   </div>
-                )}
+                </div>
+              </div>
+            ))}
+          </div>
+          <p className="text-xs italic" style={{ color: '#f0e8d5', opacity: 0.6 }}>{ZIYARA_NOTE}</p>
+        </SectionCard>
+
+        {/* Section 5 — Guide du Mataf */}
+        <SectionCard title="🕋 Guide du Mataf">
+          <div className="grid md:grid-cols-3 gap-4">
+            {MATAF_PHOTOS.map((photo) => (
+              <div
+                key={photo.src}
+                className="rounded-xl overflow-hidden"
+                style={{ border: '1px solid rgba(196,158,68,0.25)' }}
+              >
+                <div className="relative w-full" style={{ aspectRatio: '3 / 4' }}>
+                  <Image
+                    src={photo.src}
+                    alt={photo.caption}
+                    fill
+                    sizes="(max-width: 768px) 100vw, 33vw"
+                    style={{ objectFit: 'cover' }}
+                  />
+                </div>
+                <div className="p-3">
+                  <p className="text-sm mb-2" style={{ color: '#f0e8d5' }}>{photo.caption}</p>
+                  <a
+                    href={photo.mapsUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs underline"
+                    style={{ color: '#c49e44' }}
+                  >
+                    Voir sur Google Maps →
+                  </a>
+                </div>
               </div>
             ))}
           </div>
         </SectionCard>
 
-        {/* Section — CTA Inscription */}
+        {/* Section 6 — Qui partage ma chambre */}
+        <SectionCard title="🛏 Qui partage ma chambre">
+          <p className="text-xs italic mb-5" style={{ color: '#f0e8d5', opacity: 0.6 }}>
+            Regroupements d&apos;hébergement — certains membres de famille apparaissent seulement par
+            leur lien de parenté (ex. &laquo; épouse &raquo;, &laquo; fils &raquo;) plutôt que par leur
+            nom, selon la façon dont la liste a été préparée.
+          </p>
+          {ROOM_GROUPS.map((cityGroup) => {
+            const hotel = HOTELS.find((h) => h.city === cityGroup.city)
+            return (
+              <div key={cityGroup.city} className="mb-6 last:mb-0">
+                <div className="flex items-center gap-2 mb-3">
+                  <span
+                    className="text-xs px-2 py-0.5 rounded-full font-semibold"
+                    style={{ backgroundColor: '#c49e44', color: '#0d2518' }}
+                  >
+                    {cityGroup.city}
+                  </span>
+                  {hotel && (
+                    <span className="text-xs" style={{ color: '#f0e8d5', opacity: 0.7 }}>
+                      {hotel.hotelName} · {hotel.hotelAddress}
+                    </span>
+                  )}
+                </div>
+                {hotel && (
+                  <a
+                    href={hotel.mapsUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs underline mb-3 inline-block"
+                    style={{ color: '#c49e44' }}
+                  >
+                    Voir l&apos;hôtel sur Google Maps →
+                  </a>
+                )}
+                <div className="grid md:grid-cols-2 gap-3">
+                  {cityGroup.groups.map((group, i) => (
+                    <div
+                      key={i}
+                      className="rounded-xl p-3 text-sm"
+                      style={{
+                        backgroundColor: 'rgba(196,158,68,0.08)',
+                        border: '1px solid rgba(196,158,68,0.2)',
+                        borderLeftWidth: '4px',
+                        borderLeftColor: groupColor(i),
+                      }}
+                    >
+                      {group.map((name) => (
+                        <div key={name} style={{ color: '#f0e8d5', opacity: 0.9 }}>{name}</div>
+                      ))}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )
+          })}
+        </SectionCard>
+
+        {/* Downloads */}
+        <SectionCard title="📄 Documents à télécharger">
+          <div className="flex flex-col gap-3">
+            {DOWNLOADS.map((d) => (
+              <a
+                key={d.href}
+                href={d.href}
+                download
+                className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-sm font-semibold transition-all"
+                style={{ backgroundColor: 'rgba(196,158,68,0.12)', border: '1px solid rgba(196,158,68,0.3)', color: '#c49e44' }}
+              >
+                ⬇️ {d.label}
+              </a>
+            ))}
+          </div>
+        </SectionCard>
+
+        {/* Section — Inscription (gardé, déplacé en bas de page) */}
         <div
           className="rounded-2xl border p-6 md:p-8 mb-8 text-center"
           style={{ borderColor: '#c49e44', backgroundColor: 'rgba(196,158,68,0.1)' }}
@@ -223,7 +507,16 @@ function HomeView({
           >
             S&apos;inscrire / Modifier mon inscription
           </button>
-          <div className="mt-5">
+          <div className="mt-5 flex items-center justify-center gap-4">
+            <a
+              href="https://www.flightradar24.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs underline"
+              style={{ color: '#f0e8d5', opacity: 0.5 }}
+            >
+              ✈️ Suivre mon vol
+            </a>
             <Link
               href="/admin"
               className="text-xs"
@@ -233,432 +526,6 @@ function HomeView({
             </Link>
           </div>
         </div>
-
-        {/* Section 2 — Notice importante */}
-        <div
-          className="rounded-2xl border-2 p-6 md:p-8 mb-8"
-          style={{ borderColor: '#dc2626', backgroundColor: 'rgba(220,38,38,0.07)' }}
-        >
-          <h2
-            className="text-xl md:text-2xl font-semibold mb-4"
-            style={{ color: '#fca5a5', fontFamily: 'Georgia, Palatino, serif' }}
-          >
-            ⚠️ Notice importante — À lire attentivement
-          </h2>
-          <div className="space-y-5 text-base leading-relaxed" style={{ color: '#f0e8d5' }}>
-            <div>
-              <h3 className="font-semibold mb-1" style={{ color: '#fca5a5' }}>
-                Sidi et Oumoussama
-              </h3>
-              <p>
-                Sidi et Oumoussama seront peut-être présents lors de ce voyage, mais{' '}
-                <strong style={{ color: '#fca5a5' }}>sans aucune garantie</strong>. Vous pourrez
-                insha&apos;Allah les croiser, mais ne comptez pas sur leur présence permanente.
-                L&apos;Omra ne sera pas effectuée avec eux — chacun effectuera son Omra avec son
-                groupe, selon son rythme.
-              </p>
-            </div>
-            <div>
-              <h3 className="font-semibold mb-1" style={{ color: '#fca5a5' }}>
-                Responsabilité familiale
-              </h3>
-              <p>
-                Cette Omra est organisée pour l&apos;ensemble du groupe, mais chaque participant est
-                entièrement responsable de sa propre famille : ses enfants, ses personnes âgées et
-                toute personne à sa charge. Les organisateurs ne peuvent pas assurer la prise en
-                charge individuelle des membres de chaque famille.
-              </p>
-            </div>
-            <div>
-              <h3 className="font-semibold mb-1" style={{ color: '#fca5a5' }}>
-                Organisation bénévole — aucune réclamation
-              </h3>
-              <p>
-                Ce voyage est organisé bénévolement, dans le seul but de faciliter l&apos;accès à
-                l&apos;Omra de manière simple et abordable. En conséquence, aucune réclamation ou
-                plainte ne pourra être acceptée. Si un aspect de l&apos;organisation ne convient pas
-                à un participant (transport, hébergement, programme...), il est libre d&apos;organiser
-                cela par ses propres moyens — à condition d&apos;en informer les organisateurs à
-                l&apos;avance.
-              </p>
-            </div>
-            <div>
-              <h3 className="font-semibold mb-1" style={{ color: '#fca5a5' }}>
-                Séparation hommes / femmes
-              </h3>
-              <p>
-                Dans un souci d&apos;organisation et d&apos;économie, les chambres seront réparties
-                entre hommes et femmes séparément. Ne comptez pas nécessairement sur être dans la
-                même chambre que votre famille ou votre conjoint(e). Cette organisation nous permet
-                de minimiser les coûts pour tout le monde.
-              </p>
-            </div>
-            <div>
-              <h3 className="font-semibold mb-1" style={{ color: '#fca5a5' }}>
-                Date limite d&apos;inscription — IMPORTANT
-              </h3>
-              <p>
-                Les inscriptions doivent être confirmées{' '}
-                <strong style={{ color: '#fca5a5' }}>avant mi-juillet 2026</strong>, et au plus tard{' '}
-                <strong style={{ color: '#fca5a5' }}>fin juillet 2026</strong>. Passé cette date, les
-                personnes non inscrites ne seront pas comptabilisées et ne pourront plus rejoindre le
-                groupe. Toute personne confirmée fin juillet s&apos;engage à participer et à régler sa
-                part des frais d&apos;hébergement, qui sera réservé sur cette base.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Section 3 — Budget estimé */}
-        <SectionCard title="💰 Budget estimé">
-          <div className="text-center mb-6">
-            <span className="text-3xl md:text-4xl font-bold" style={{ color: '#c49e44' }}>
-              ~1 100 – 1 200 €
-            </span>
-            <span className="ml-2 text-lg" style={{ color: '#f0e8d5', opacity: 0.8 }}>
-              / personne
-            </span>
-          </div>
-          <ul className="space-y-3 mb-6">
-            <li className="flex items-start gap-3">
-              <span className="text-xl">✈️</span>
-              <span style={{ color: '#f0e8d5' }}>
-                <strong style={{ color: '#c49e44' }}>Vol aller-retour :</strong>{' '}
-                ~500 – 600 € <span style={{ opacity: 0.7 }}>(en cours de négociation)</span>
-              </span>
-            </li>
-            <li className="flex items-start gap-3">
-              <span className="text-xl">🏨</span>
-              <span style={{ color: '#f0e8d5' }}>
-                <strong style={{ color: '#c49e44' }}>Hébergement + repas + transport sur place + visites</strong>{' '}
-                (Makkah, Medine, grottes et lieux saints) : ~550 €
-              </span>
-            </li>
-          </ul>
-          <div
-            className="rounded-xl p-4 italic text-sm"
-            style={{ borderLeft: '3px solid #c49e44', backgroundColor: 'rgba(196,158,68,0.08)', color: '#f0e8d5', opacity: 0.9 }}
-          >
-            ⚠️ Estimation basée sur le voyage 2025. Le tarif définitif sera confirmé une fois les vols
-            et hébergements réservés.
-          </div>
-        </SectionCard>
-
-        {/* Section 4 — Vols */}
-        <SectionCard title="✈️ Vols">
-          <div
-            className="rounded-xl p-4 mb-5 text-sm leading-relaxed"
-            style={{ borderLeft: '3px solid #c49e44', backgroundColor: 'rgba(196,158,68,0.12)', color: '#f0e8d5' }}
-          >
-            <strong style={{ color: '#c49e44' }}>
-              Chaque participant réserve son propre billet d&apos;avion, individuellement.
-            </strong>{' '}
-            Nous vous communiquerons les meilleures options trouvées pour vous aider à choisir.
-          </div>
-          {/* TODO: add flight links when provided */}
-          <div className="grid md:grid-cols-3 gap-4 mb-5">
-            {[
-              {
-                icon: '🛫',
-                route: 'Aller — Rome (FCO) → Jeddah (JED)',
-                airline: 'WizzAir',
-                detail:
-                  "Option low-cost intéressante pour l'aller. Nécessite de se rendre à Rome au préalable (train, covoiturage, vol interne).",
-              },
-              {
-                icon: '🛬',
-                route: 'Retour — Medine (MED) → Paris (ORY)',
-                airline: 'Transavia',
-                detail:
-                  'Option intéressante pour le retour direct depuis Médine vers Paris-Orly.',
-              },
-              {
-                icon: '🛫🛬',
-                route: 'Aller-Retour via Athènes',
-                airline: 'Aegean Airlines (compagnie grecque)',
-                detail:
-                  'Option intéressante en aller-retour via Athènes. Dessert Lyon et Paris. À comparer selon les dates.',
-              },
-            ].map((f) => (
-              <div
-                key={f.route}
-                className="rounded-xl p-4"
-                style={{ backgroundColor: 'rgba(196,158,68,0.1)', border: '1px solid rgba(196,158,68,0.25)' }}
-              >
-                <div className="text-2xl mb-2">{f.icon}</div>
-                <div className="text-sm font-medium mb-1" style={{ color: '#f0e8d5' }}>
-                  {f.route}
-                </div>
-                <div className="text-sm font-semibold mb-2" style={{ color: '#c49e44' }}>
-                  {f.airline}
-                </div>
-                <div className="text-sm" style={{ color: '#f0e8d5', opacity: 0.75 }}>
-                  {f.detail}
-                </div>
-              </div>
-            ))}
-          </div>
-          <div
-            className="rounded-xl p-4 text-sm leading-relaxed space-y-3"
-            style={{ borderLeft: '3px solid #c49e44', backgroundColor: 'rgba(196,158,68,0.08)', color: '#f0e8d5' }}
-          >
-            <div className="font-semibold" style={{ color: '#c49e44' }}>
-              🚌 Transport aéroport → hôtel
-            </div>
-            <p style={{ opacity: 0.9 }}>
-              Nous organiserons 2 à 3 navettes collectives depuis l&apos;aéroport vers l&apos;hôtel
-              pour regrouper les arrivants aux horaires les plus fréquentés.
-            </p>
-            <p style={{ opacity: 0.9 }}>
-              Les participants qui ne souhaitent pas attendre peuvent prendre un taxi sur place —
-              les tarifs sont très abordables.
-            </p>
-          </div>
-        </SectionCard>
-
-        {/* Section 5 — Hébergement */}
-        <SectionCard title="🏨 Hébergement">
-          <div className="grid md:grid-cols-2 gap-4 mb-4">
-            {[
-              {
-                city: 'Makkah',
-                name: 'Abraj Al Tayseer Tuwa Hotel',
-                stars: '3★',
-                desc: "Hôtel 3★ à ~15 min à pied de la Grande Mosquée. Navette gratuite. Déjà utilisé en 2025.",
-                href: 'https://www.booking.com/hotel/sa/al-tayseer-towers.html',
-              },
-              {
-                city: 'Medine',
-                name: 'Diyar AlSaliheen Serviced Apartments',
-                stars: 'Appart.',
-                desc: "Appartements spacieux avec cuisine. ~10 min en taxi de la Mosquée du Prophète. Navette aux heures de prière. Déjà utilisé en 2025.",
-                href: 'https://www.booking.com/hotel/sa/diyar-alsaliheen-dyr-lslhyn.html',
-              },
-            ].map((h) => (
-              <div
-                key={h.city}
-                className="rounded-xl p-4"
-                style={{ backgroundColor: 'rgba(196,158,68,0.1)', border: '1px solid rgba(196,158,68,0.25)' }}
-              >
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="text-xs px-2 py-0.5 rounded-full font-semibold" style={{ backgroundColor: '#c49e44', color: '#0d2518' }}>
-                    {h.city}
-                  </span>
-                </div>
-                <div className="font-semibold text-sm mb-2" style={{ color: '#c49e44' }}>
-                  {h.name}
-                </div>
-                <p className="text-sm mb-3" style={{ color: '#f0e8d5', opacity: 0.85 }}>
-                  {h.desc}
-                </p>
-                <a
-                  href={h.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-xs underline"
-                  style={{ color: '#c49e44' }}
-                >
-                  Voir sur Booking.com →
-                </a>
-              </div>
-            ))}
-          </div>
-          <p className="text-sm italic" style={{ color: '#f0e8d5', opacity: 0.65 }}>
-            D&apos;autres établissements sont également à l&apos;étude selon les disponibilités et les tarifs.
-          </p>
-
-          {/* Repas sub-section */}
-          <div
-            className="rounded-xl p-4 mt-6"
-            style={{ backgroundColor: 'rgba(196,158,68,0.1)', border: '1px solid rgba(196,158,68,0.25)' }}
-          >
-            <div className="font-semibold mb-3" style={{ color: '#c49e44' }}>
-              🍽 Repas
-            </div>
-            <p className="text-sm mb-3" style={{ color: '#f0e8d5', opacity: 0.85 }}>
-              Les repas suivants sont inclus dans l&apos;organisation :
-            </p>
-            <ul className="space-y-2 mb-3">
-              <li className="flex items-start gap-2 text-sm" style={{ color: '#f0e8d5', opacity: 0.9 }}>
-                <span style={{ color: '#c49e44' }}>•</span>
-                <span>
-                  <strong style={{ color: '#c49e44' }}>Petit-déjeuner</strong> — fourni chaque matin
-                </span>
-              </li>
-              <li className="flex items-start gap-2 text-sm" style={{ color: '#f0e8d5', opacity: 0.9 }}>
-                <span style={{ color: '#c49e44' }}>•</span>
-                <span>
-                  <strong style={{ color: '#c49e44' }}>Déjeuner</strong> — un repas collectif sera
-                  organisé la plupart des jours, aux alentours de Duhr ou Asr
-                </span>
-              </li>
-            </ul>
-            <p className="text-sm" style={{ color: '#f0e8d5', opacity: 0.85 }}>
-              Les détails (lieu, menu) seront communiqués sur place. Prévoyez de quoi compléter selon
-              vos besoins personnels (enfants, régimes particuliers, etc.).
-            </p>
-          </div>
-        </SectionCard>
-
-        {/* Section 6 — Programme & Visites */}
-        <SectionCard title="🕌 Programme & Visites">
-          <p className="text-sm mb-6" style={{ color: '#f0e8d5', opacity: 0.85 }}>
-            Le programme détaillé sera communiqué à l&apos;approche de la date du voyage. Voici les
-            visites prévues :
-          </p>
-          <div className="grid md:grid-cols-2 gap-4 mb-5">
-            {[
-              {
-                city: 'À La Mecque',
-                visits: [
-                  'Jabal Al Nour (Grotte de Hiraa) — lieu de la première révélation',
-                  "Jabal Al Thawr — grotte où le Prophète ﷺ s'est réfugié lors de l'Hégire",
-                  "Deuxième Omra (insha'Allah)",
-                ],
-              },
-              {
-                city: 'À Médine',
-                visits: [
-                  'Champ de bataille de Badr',
-                  'Mont Uhud',
-                  "Masjid Quba — première mosquée de l'Islam",
-                  'Masjid Qiblatayn — mosquée des deux qiblas',
-                  'Puits de Ghars (Bir Ghars) — puits utilisé par le Prophète ﷺ',
-                  'Palmeraie de Médine — plantation de palmiers-dattiers historique',
-                ],
-              },
-            ].map((group) => (
-              <div
-                key={group.city}
-                className="rounded-xl p-4"
-                style={{ backgroundColor: 'rgba(196,158,68,0.1)', border: '1px solid rgba(196,158,68,0.25)' }}
-              >
-                <div className="font-semibold mb-3" style={{ color: '#c49e44' }}>
-                  {group.city}
-                </div>
-                <ul className="space-y-2">
-                  {group.visits.map((v) => (
-                    <li key={v} className="flex items-start gap-2 text-sm" style={{ color: '#f0e8d5', opacity: 0.9 }}>
-                      <span style={{ color: '#c49e44' }}>📍</span>
-                      <span>{v}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
-          <p className="text-xs italic" style={{ color: '#f0e8d5', opacity: 0.6 }}>
-            * Les allers-retours quotidiens vers les deux Haramayn — Al-Masjid Al-Haram (La Mecque)
-            et Al-Masjid An-Nabawi (Mosquée du Prophète à Médine) — ne sont pas organisés par nos
-            soins. L&apos;hôtel met à disposition des navettes aux heures de prière, libres à vous de
-            les utiliser. En revanche, les visites listées ci-dessus seront organisées et encadrées
-            par le groupe.
-          </p>
-        </SectionCard>
-
-        {/* Section 7 — À faire maintenant */}
-        <SectionCard title="✅ À faire maintenant">
-          <div className="grid md:grid-cols-2 gap-4">
-            {/* Visa card */}
-            <div
-              className="rounded-xl p-4"
-              style={{ backgroundColor: 'rgba(196,158,68,0.1)', border: '1px solid rgba(196,158,68,0.25)' }}
-            >
-              <div className="text-2xl mb-2">🛂</div>
-              <div className="font-semibold mb-2" style={{ color: '#c49e44' }}>
-                Faire son visa
-              </div>
-              <div className="text-sm space-y-3" style={{ color: '#f0e8d5', opacity: 0.85 }}>
-                <p>
-                  Le visa touristique pour l&apos;Arabie Saoudite est obligatoire et s&apos;obtient
-                  entièrement en ligne.
-                </p>
-                <p>
-                  <strong style={{ color: '#fca5a5' }}>⚠️ Important :</strong> Demandez un{' '}
-                  <strong style={{ color: '#c49e44' }}>VISA TOURISTIQUE</strong> — pas un visa Omra.
-                  Le visa touristique vous permet d&apos;effectuer l&apos;Omra (vous pouvez
-                  sélectionner &laquo; Omra &raquo; comme motif de visite lors de la demande, mais le
-                  type de visa doit bien être &laquo; Touristique &raquo;).
-                </p>
-                <p>
-                  Vérifiez que votre passeport est valable au moins 6 mois après la date
-                  d&apos;arrivée sur le territoire saoudien.
-                </p>
-                <p>🔗 Lien officiel pour faire votre visa :</p>
-              </div>
-              <a
-                href="https://visa.visitsaudi.com/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-block mt-3 px-5 py-2.5 rounded-lg text-sm font-semibold transition-all"
-                style={{ backgroundColor: '#c49e44', color: '#0d2518' }}
-              >
-                Faire son visa →
-              </a>
-            </div>
-
-            {/* Billet d'avion card */}
-            <div
-              className="rounded-xl p-4"
-              style={{ backgroundColor: 'rgba(196,158,68,0.1)', border: '1px solid rgba(196,158,68,0.25)' }}
-            >
-              <div className="text-2xl mb-2">✈️</div>
-              <div className="font-semibold mb-2" style={{ color: '#c49e44' }}>
-                Réserver son billet d&apos;avion
-              </div>
-              <p className="text-sm mb-3" style={{ color: '#f0e8d5', opacity: 0.85 }}>
-                Chaque participant réserve son propre billet. Consultez la section Vols ci-dessus pour
-                les options recommandées. Attendez la confirmation des dates exactes avant de réserver.
-              </p>
-              <div
-                className="rounded-lg p-3 text-sm"
-                style={{ borderLeft: '3px solid #c49e44', backgroundColor: 'rgba(196,158,68,0.12)', color: '#f0e8d5' }}
-              >
-                <strong style={{ color: '#fca5a5' }}>⚠️</strong> Une fois votre billet réservé, pensez
-                à renseigner vos numéros de vol (aller et retour) dans votre inscription — cela nous
-                permet d&apos;organiser les navettes depuis et vers l&apos;aéroport.
-              </div>
-            </div>
-          </div>
-        </SectionCard>
-
-        {/* Section 8 — À faire juste avant de prendre l'avion */}
-        <SectionCard title="🧳 À faire juste avant de prendre l'avion">
-          <div
-            className="rounded-xl p-4 mb-5 text-sm leading-relaxed"
-            style={{ borderLeft: '3px solid #c49e44', backgroundColor: 'rgba(196,158,68,0.12)', color: '#f0e8d5' }}
-          >
-            Les étapes suivantes sont à effectuer le jour du départ ou juste avant de prendre
-            l&apos;avion — pas maintenant.
-          </div>
-          <ul className="space-y-3 mb-5">
-            {[
-              '🚿 Faire les grandes ablutions (ghusl)',
-              '✂️ Se couper les ongles, tailler la barbe, etc.',
-              '🙏 Faire deux Rakatayn (Rakatayn al-ihram)',
-              "👘 Acheter son Ihram et le garder dans les bagages à main (ne pas le mettre en soute)",
-              "📱 Télécharger l'application NUSUK (obligatoire pour l'Omra)",
-              "💉 Vaccin méningite — En pratique, il n'a pas été demandé aux voyageurs ces dernières années, et de nombreux sites confirment qu'il n'est plus obligatoire. Cependant, une ambiguïté subsiste entre certains sites officiels. Chacun est libre de le faire ou non en connaissance de cause.",
-              "📄 Certificat de conversion à l'Islam (pour les convertis) — En pratique, ce document n'est généralement pas demandé à l'entrée du territoire saoudien. Chaque personne concernée prend sa propre décision en connaissance de cause.",
-            ].map((item) => (
-              <li
-                key={item}
-                className="flex items-start gap-3 rounded-xl p-3 text-sm"
-                style={{ backgroundColor: 'rgba(196,158,68,0.08)', border: '1px solid rgba(196,158,68,0.2)', color: '#f0e8d5' }}
-              >
-                <span style={{ color: '#4ade80' }}>✓</span>
-                <span style={{ opacity: 0.9 }}>{item}</span>
-              </li>
-            ))}
-          </ul>
-          <div
-            className="rounded-xl p-4 italic text-sm"
-            style={{ borderLeft: '3px solid #c49e44', backgroundColor: 'rgba(196,158,68,0.08)', color: '#f0e8d5', opacity: 0.9 }}
-          >
-            🕋 La prise d&apos;Ihram se fait à l&apos;escale ou dans l&apos;avion, juste avant de
-            passer les Miqats — gardez votre Ihram dans vos bagages à main, pas en soute.
-          </div>
-        </SectionCard>
       </main>
 
       <footer className="text-center py-6 px-4 border-t" style={{ borderColor: 'rgba(196,158,68,0.2)' }}>
